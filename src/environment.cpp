@@ -52,10 +52,16 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
     // DONE:: Render rays
     // renderRays(viewer, lidar->position, inputCloud);
 
-    // TODO: Render point clouds
-    renderPointCloud(viewer, inputCloud, "Point Cloud", Color(0.8, 0, 0.8));
+    // DONE:: Render point clouds
+    // renderPointCloud(viewer, inputCloud, "Point Cloud", Color(0.8, 0, 0.8));
 
-  
+    // DONE:: Create a PCD processor (ProcessPointClouds)
+    ProcessPointClouds<pcl::PointXYZ> *processPointClouds = new ProcessPointClouds<pcl::PointXYZ>();
+
+    // Use the processor object to segment the road from the obstacles (cars, etc.)
+    std::pair<pcl::PointCloud<pcl::PointXYZ>::Ptr, pcl::PointCloud<pcl::PointXYZ>::Ptr> segmentCloud = processPointClouds->SegmentPlane(inputCloud, 100, 0.2);
+    renderPointCloud(viewer,segmentCloud.first,"obstCloud",Color(1,0,0));
+    renderPointCloud(viewer,segmentCloud.second,"roadCloud",Color(0,1,0));
 }
 
 
