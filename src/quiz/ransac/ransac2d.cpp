@@ -7,6 +7,9 @@
 // using templates for processPointClouds so also include .cpp to help linker
 #include "../../processPointClouds.cpp"
 
+#include <cmath>
+#include <iostream>
+
 pcl::PointCloud<pcl::PointXYZ>::Ptr CreateData()
 {
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
@@ -66,19 +69,52 @@ std::unordered_set<int> Ransac(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int ma
 	std::unordered_set<int> inliersResult;
 	srand(time(NULL));
 	
-	// TODO: Fill in this function
+	// DONE:: Fill in this function
 
 	// For max iterations 
+	for (int i = 0; i < maxIterations; i ++) {  // or while (maxIterations --) {}
 
-	// Randomly sample subset and fit line
+		// Randomly sample subset and fit line
+		// 1. PointCloud is indexed
+		// 2. pick two random indices and keep them
+		int i1 = rand() % cloud->points.size();  // a random integer index in [0, size)
+		int i2 = rand() % cloud->points.size();
 
-	// Measure distance between every point and fitted line
-	// If distance is smaller than threshold count it as inlier
+		// sanity check
+		// cout << "i1 = " << i1 << ", i2 = " << i2 << endl;
+		
+		// 3. fit the line
+		float x1 = cloud->points[i1].x;
+		float y1 = cloud->points[i1].y;
+		float x2 = cloud->points[i2].x;
+		float y2 = cloud->points[i2].y;
+		float A = y1 - y2;
+		float B = x2 - x1;
+		float C = x1 * y2 - x2 * y1;
 
-	// Return indicies of inliers from fitted line with most inliers
-	
+		// 4. iterate through the the points (including the 2 points)
+		// 5. fill in an unordered_set with inlier indices
+		std::unordered_set<int> candidateSet;
+		for (int j = 0; j < cloud->points.size(); j ++) {
+			float px = cloud->points[j].x;
+			float py = cloud->points[j].y;
+
+			// Measure distance between every point and fitted line
+			float d = fabs(A * px + B * py + C) / sqrt(A * A + B * B);
+
+			// If distance is no farther than the threshold, insert into inlier set
+			if (d <= distanceTol) candidateSet.insert(j);
+		}
+
+		// 6. If the last set has more inliers than the currently held, swap them
+		if (candidateSet.size() > inliersResult.size()) inliersResult.swap(candidateSet);
+
+		// sanity check
+		// cout << inliersResult.size() << " inliers" << endl; 
+	}
+
+	// Return indicies of inliers from fitted line with most inliers	
 	return inliersResult;
-
 }
 
 int main ()
@@ -91,8 +127,8 @@ int main ()
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = CreateData();
 	
 
-	// TODO: Change the max iteration and distance tolerance arguments for Ransac function
-	std::unordered_set<int> inliers = Ransac(cloud, 0, 0);
+	// DONE:: Change the max iteration and distance tolerance arguments for Ransac function
+	std::unordered_set<int> inliers = Ransac(cloud, 10, 1.0);
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr  cloudInliers(new pcl::PointCloud<pcl::PointXYZ>());
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloudOutliers(new pcl::PointCloud<pcl::PointXYZ>());
