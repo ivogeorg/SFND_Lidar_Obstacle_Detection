@@ -46,6 +46,7 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
     std::vector<Car> cars = initHighway(renderScene, viewer);
     
     // DONE:: Create lidar sensor 
+    // TODO:: This is not a smart pointer so it's a memory leak!!!
     Lidar *lidar = new Lidar(cars, 0);
     pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud = lidar->scan();
 
@@ -56,12 +57,34 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
     // renderPointCloud(viewer, inputCloud, "Point Cloud", Color(0.8, 0, 0.8));
 
     // DONE:: Create a PCD processor (ProcessPointClouds)
-    ProcessPointClouds<pcl::PointXYZ> *processPointClouds = new ProcessPointClouds<pcl::PointXYZ>();
+    // TODO:: This is not a smart pointer so it's a memory leak!!!
+    ProcessPointClouds<pcl::PointXYZ> *pointProcessor = new ProcessPointClouds<pcl::PointXYZ>();
 
     // Use the processor object to segment the road from the obstacles (cars, etc.)
-    std::pair<pcl::PointCloud<pcl::PointXYZ>::Ptr, pcl::PointCloud<pcl::PointXYZ>::Ptr> segmentCloud = processPointClouds->SegmentPlane(inputCloud, 100, 0.2);
-    renderPointCloud(viewer,segmentCloud.first,"obstCloud",Color(1,0,0));
-    renderPointCloud(viewer,segmentCloud.second,"roadCloud",Color(0,1,0));
+    std::pair<pcl::PointCloud<pcl::PointXYZ>::Ptr, pcl::PointCloud<pcl::PointXYZ>::Ptr> segmentCloud = pointProcessor->SegmentPlane(inputCloud, 100, 0.2);
+
+    // renderPointCloud(viewer,segmentCloud.first,"obstCloud",Color(1,0,0));
+    // renderPointCloud(viewer,segmentCloud.second,"roadCloud",Color(0,1,0));
+
+    // Cluster obstacles
+    // NOTE:: This is a vector of smart pointers to point clouds!
+    //        Clustering should be returning the same!
+    //        Clustering declares a local std::vector, so the following 
+    //        most probably calls the move constuctor for std::vector.
+    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> cloudClusters = pointProcessor->Clustering(segmentCloud.first, 1.0, 3, 30);
+
+    int clusterId = 0;
+    std::vector<Color> colors = { Color(1, 0, 0), Color(0, 1, 0), Color(0, 0, 1) };
+
+    for (pcl::PointCloud<pcl::PointXYZ>::Ptr cluster : cloudClusters)
+    {
+        std::cout << "cluster size ";
+        pointProcessor->numPoints(cluster);
+        renderPointCloud(viewer, cluster, "obstCloud" + std::to_string(clusterId), colors[clusterId]);
+        ++ clusterId;
+    }
+
+    // TODO:: Delete pointers or wrap with boost::shared_ptr<T>!!!
 }
 
 

@@ -213,13 +213,51 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
 
     // TODO:: Fill in the function to perform euclidean clustering to group detected obstacles
 
+    // Creating the KdTree object for the search method of the extraction
+    typename pcl::search::KdTree<PointT>::Ptr tree (new pcl::search::KdTree<PointT>);
+    tree->setInputCloud (cloud);
 
+    typename pcl::EuclideanClusterExtraction<PointT> ec;
+    ec.setClusterTolerance (clusterTolerance);  // in m
+    ec.setMinClusterSize (minSize);
+    ec.setMaxClusterSize (maxSize);
+    ec.setSearchMethod (tree);
+    ec.setInputCloud (cloud);
 
+    std::vector<pcl::PointIndices> cluster_indices;
+    ec.extract (cluster_indices);
+
+    int j = 0;
+    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)  // or "for (pcl::PointIndices getIndices: clusterIndices) {}""
+    {
+        typename pcl::PointCloud<PointT>::Ptr cloud_cluster (new pcl::PointCloud<PointT>);
+        for (const auto& idx : it->indices)  // or "for (int index: getIndices.indices)""
+            cloud_cluster->push_back ((*cloud)[idx]); // or cloud_cluster->push_back(cloud->points[index])
+            // NOTE:: Apparently, (*cloud)[index] and cloud->points[index] are equivalent!
+        cloud_cluster->width = cloud_cluster->size ();
+        cloud_cluster->height = 1;
+        cloud_cluster->is_dense = true;
+
+        std::cout << "PointCloud representing the Cluster: " << cloud_cluster->size () << " data points." << std::endl;
+
+        // Add to clusters
+        // TODO:: clusters is a pointer: shouldn't this be clusters->push_back()?
+        // Return type: A vector of pointers to point clouds, so no deref of cloud_cluster!
+        clusters.push_back(cloud_cluster);
+
+        // Write out
+        // std::stringstream ss;
+        // ss << "cloud_cluster_" << j << ".pcd";
+        // writer.write<pcl::PointXYZ> (ss.str (), *cloud_cluster, false); //*
+        
+        j ++;  // or without it in case of "for (pcl::PointIndices getIndices: clusterIndices) {}""
+    }
 
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << "clustering took " << elapsedTime.count() << " milliseconds and found " << clusters.size() << " clusters" << std::endl;
 
+    // NOTE:: move constructor used for the caller
     return clusters;
 }
 
