@@ -117,6 +117,70 @@ std::unordered_set<int> Ransac(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int ma
 	return inliersResult;
 }
 
+std::unordered_set<int> RansacPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int maxIterations, float distanceTol)
+{
+	std::unordered_set<int> inliersResult;
+	srand(time(NULL));
+	
+	// DONE:: Fill in this function
+
+	// For max iterations 
+	for (int i = 0; i < maxIterations; i ++) {  // or while (maxIterations --) {}
+
+		// Randomly sample subset and fit line
+		// 1. PointCloud is indexed
+		// 2. Pick 3 random indices
+		int i1 = rand() % cloud->points.size();  // a random integer index in [0, size)
+		int i2 = rand() % cloud->points.size();
+		int i3 = rand() % cloud->points.size();
+
+		// sanity check
+		// cout << "i1 = " << i1 << ", i2 = " << i2 << endl;
+		
+		// 3. Fit the plane through these 3 points (may be degenerate but that will be filtered)
+		float x1 = cloud->points[i1].x;
+		float y1 = cloud->points[i1].y;
+		float z1 = cloud->points[i1].z;
+
+		float x2 = cloud->points[i2].x;
+		float y2 = cloud->points[i2].y;
+		float z2 = cloud->points[i2].z;
+
+		float x3 = cloud->points[i3].x;
+		float y3 = cloud->points[i3].y;
+		float z3 = cloud->points[i3].z;
+
+		float A = (y1 - y1) * (z3 - z1) - (y3 - y1) * (z2 - z1);
+		float B = (z2 - z1) * (x3 - x1) - (z3 - z1) * (x2 - x1);
+		float C = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
+		float D = - (A * x1 + B * y1 + C * z1);
+
+		// 4. iterate through the the points (including the 3 points)
+		// 5. fill in an unordered_set with inlier indices
+		std::unordered_set<int> candidateSet;
+		for (int j = 0; j < cloud->points.size(); j ++) {
+			float px = cloud->points[j].x;
+			float py = cloud->points[j].y;
+			float pz = cloud->points[j].z;
+
+			// Measure distance between every point and fitted line
+			float d = fabs(A * px + B * py + C * pz + D) / sqrt(A * A + B * B + C * C);
+
+			// If distance is no farther than the threshold, insert into inlier set
+			if (d <= distanceTol) candidateSet.insert(j);
+		}
+
+		// 6. If the last set has more inliers than the currently held, swap them
+		if (candidateSet.size() > inliersResult.size()) inliersResult.swap(candidateSet);
+
+		// sanity check
+		// cout << inliersResult.size() << " inliers" << endl; 
+	}
+
+	// Return indicies of inliers from fitted line with most inliers	
+	return inliersResult;
+}
+
 int main ()
 {
 
@@ -124,11 +188,13 @@ int main ()
 	pcl::visualization::PCLVisualizer::Ptr viewer = initScene();
 
 	// Create data
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = CreateData();
+	// pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = CreateData();
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = CreateData3D();
 	
 
 	// DONE:: Change the max iteration and distance tolerance arguments for Ransac function
-	std::unordered_set<int> inliers = Ransac(cloud, 10, 1.0);
+	// std::unordered_set<int> inliers = Ransac(cloud, 10, 1.0);
+	std::unordered_set<int> inliers = RansacPlane(cloud, 10, 0.25);
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr  cloudInliers(new pcl::PointCloud<pcl::PointXYZ>());
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloudOutliers(new pcl::PointCloud<pcl::PointXYZ>());
