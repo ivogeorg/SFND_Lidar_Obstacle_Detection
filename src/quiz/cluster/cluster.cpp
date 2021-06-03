@@ -47,12 +47,12 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr CreateData(std::vector<std::vector<float>> p
 void render2DTree(Node* node, pcl::visualization::PCLVisualizer::Ptr& viewer, Box window, int& iteration, uint depth=0)
 {
 
-	if(node!=NULL)
+	if (node != NULL)
 	{
 		Box upperWindow = window;
 		Box lowerWindow = window;
 		// split on x axis
-		if(depth%2==0)
+		if (depth % 2 == 0)
 		{
 			viewer->addLine(pcl::PointXYZ(node->point[0], window.y_min, 0),pcl::PointXYZ(node->point[0], window.y_max, 0),0,0,1,"line"+std::to_string(iteration));
 			lowerWindow.x_max = node->point[0];
@@ -65,10 +65,10 @@ void render2DTree(Node* node, pcl::visualization::PCLVisualizer::Ptr& viewer, Bo
 			lowerWindow.y_max = node->point[1];
 			upperWindow.y_min = node->point[1];
 		}
-		iteration++;
+		iteration ++;
 
-		render2DTree(node->left,viewer, lowerWindow, iteration, depth+1);
-		render2DTree(node->right,viewer, upperWindow, iteration, depth+1);
+		render2DTree(node->left, viewer, lowerWindow, iteration, depth + 1);
+		render2DTree(node->right, viewer, upperWindow, iteration, depth + 1);
 
 
 	}
@@ -79,6 +79,11 @@ std::vector<std::vector<int>> euclideanCluster(const std::vector<std::vector<flo
 {
 
 	// TODO: Fill out this function to return list of indices for each cluster
+
+	// TODO:: This is the search process
+	//        - How does it start? What is the algorithm?
+
+
 
 	std::vector<std::vector<int>> clusters;
  
@@ -106,14 +111,18 @@ int main ()
 
 	KdTree* tree = new KdTree;
   
-    for (int i=0; i<points.size(); i++) 
-    	tree->insert(points[i],i); 
+	// TODO:: Insert median point
+	// TODO:: How to minimize the time to find the median?
+	//        - an "index" for each coordinate where an index is sorted by one coordinate? 
+	//        - but how to remove a point from all indices? the indices can be just pointers!
+    for (int i = 0; i < points.size(); i ++) 
+    	tree->insert(points[i], i); 
 
   	int it = 0;
-  	render2DTree(tree->root,viewer,window, it);
+  	render2DTree(tree->root, viewer, window, it);
   
   	std::cout << "Test Search" << std::endl;
-  	std::vector<int> nearby = tree->search({-6,7},3.0);
+  	std::vector<int> nearby = tree->search({-6, 7}, 3.0);
   	for(int index : nearby)
       std::cout << index << ",";
   	std::cout << std::endl;
