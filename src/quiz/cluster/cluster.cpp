@@ -115,6 +115,7 @@ int main ()
 	// TODO:: How to minimize the time to find the median?
 	//        - an "index" for each coordinate where an index is sorted by one coordinate? 
 	//        - but how to remove a point from all indices? the indices can be just pointers!
+	// TODO:: Review C++ collections, possibly create new class to hide complexity
     for (int i = 0; i < points.size(); i ++) 
     	tree->insert(points[i], i); 
 
