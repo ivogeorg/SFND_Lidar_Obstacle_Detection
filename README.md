@@ -77,7 +77,7 @@ The workspace provided in the SFND classroom comes preinstallated with everythin
    1. [Bionic 18.04](https://www.ubuntuupdates.org/package/core/bionic/universe/updates/libpcl-dev)
    2. [Focal 20.04](https://www.ubuntuupdates.org/package/core/focal/universe/base/libpcl-dev)
 
-   You can either build PCL from source (for v1.11) or use the older version.
+   You can either build PCL from source (for v1.11) or use the older version. _**Note:** [v1.13.1](https://github.com/PointCloudLibrary/pcl/releases/tag/pcl-1.13.1) is the current highest version._
 
 ### MAC
 
